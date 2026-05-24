@@ -145,6 +145,43 @@ export default function Votar({ showFlash }) {
       </div>
 
       {/* Mural */}
+      <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3">Candidatos</div>
+      <div className="grid gap-3.5 mb-7" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
+        {!state.candidatos.length ? (
+          <div className="col-span-full text-[#444] text-[11px] tracking-widest py-6">
+            Nenhum candidato cadastrado. Peça ao administrador.
+          </div>
+        ) : state.candidatos.map(c => {
+          const votos = state.votos.filter(v => v.numero === c.numero).length
+          const isSel = sel?.numero === c.numero
+          return (
+            <div
+              key={c.id}
+              onClick={() => {
+                setSel(isSel ? null : c)
+                setNumeroInput(isSel ? '' : c.numero)
+              }}
+              className={`bg-[#161616] border rounded-xl p-5 cursor-pointer transition-all relative overflow-hidden hover:-translate-y-px hover:shadow-2xl
+                ${isSel ? 'border-green-500 bg-green-500/[0.04]' : 'border-[#222] hover:border-[#333]'}`}
+            >
+              <div className={`absolute top-0 left-0 right-0 h-0.5 transition-all ${isSel ? 'bg-green-500' : 'bg-[#222]'}`} />
+              <div className="absolute top-3 right-3 text-[9px] text-[#444]">{votos} voto{votos !== 1 ? 's' : ''}</div>
+              <div className="w-14 h-14 rounded-full bg-[#222] border border-[#2a2a2a] flex items-center justify-center overflow-hidden mb-3">
+                {c.foto_url ? <img src={c.foto_url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
+              </div>
+              <div className="font-syne font-black text-[26px] text-[#f0f0f0] leading-none tracking-tight">{c.numero}</div>
+              <div className="text-[13px] text-[#e8e8e8] mt-1">{c.nome}</div>
+              <div className="text-[9px] text-[#555] tracking-widest uppercase mt-1">{c.partido}</div>
+              {isSel && (
+                <div className="absolute bottom-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[11px] text-black font-bold">✓</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <hr className="border-t border-[#222] my-6" />
+
       {/* Urna Area */}
       <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 350px' }}>
         
