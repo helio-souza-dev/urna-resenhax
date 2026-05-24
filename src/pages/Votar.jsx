@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../lib/store'
-import { simularQueryCPF, getInjecaoMsg } from '../lib/sqli'
 import { supabase } from '../lib/supabase'
 
 function LogPanel({ logs }) {
@@ -59,9 +58,17 @@ function SelBox({ cand }) {
 
 export default function Votar({ showFlash }) {
   const { state, actions } = useApp()
-  const [cpfInput, setCpfInput] = useState('')
-  const [sel, setSel] = useState(null)
-  const [logs, setLogs] = useState([{ ts: 'sistema', msg: 'pronto para receber votos.', nivel: 'ok' }])
+  const [numeroInput, setNumeroInput] = useState('')
+
+
+  useEffect(() => {
+    if (!numeroInput) {
+      setSel(null)
+      return
+    }
+    const c = state.candidatos.find(cand => cand.numero === numeroInput)
+    setSel(c || null)
+  }, [numeroInput, state.candidatos])
 
   function addLog(msg, nivel = 'ok') {
     const ts = new Date().toLocaleTimeString('pt-BR')
@@ -69,36 +76,33 @@ export default function Votar({ showFlash }) {
   }
 
   function limpar() {
-    setCpfInput('')
+    setNumeroInput('')
     setSel(null)
   }
 
-  async function confirmarVoto() {
-    if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
-    if (!sel) { showFlash('Selecione um candidato no mural.', 'err'); return }
-
-    const res = simularQueryCPF(cpfInput, state.eleitores)
-    addLog(`QUERY → SELECT * FROM eleitores WHERE cpf = '${cpfInput}'`, 'warn')
-
-    if (res.injetado) {
-      const info = getInjecaoMsg(res.tipo, state.eleitores)
-      addLog(info.log, 'err')
-      showFlash(info.flash, 'err')
-      if (info.destrutivo) actions.clearEleitoresVotos()
-      limpar()
-      return
+  function handleKeypad(num) {
+    if (numeroInput.length < 4) {
+      setNumeroInput(prev => prev + num)
     }
+  }
 
-    const el = res.eleitor
-    if (!el) { addLog(`CPF ${cpfInput} não encontrado`, 'err'); showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
+  async function confirmarVoto() {
+    const cpf = state.currentCpf
+    if (!cpf) { showFlash('Erro: Usuário não identificado.', 'err'); return }
+    if (!sel && numeroInput !== 'BRANCO') { showFlash('Número de candidato inválido ou não selecionado.', 'err'); return }
+
+    const el = state.eleitores.find(e => e.cpf === cpf)
+    if (!el) { addLog(`Eleitor não encontrado no banco local`, 'err'); showFlash('Erro de sessão do eleitor.', 'err'); return }
     if (el.votou) { addLog(`${el.nome} já votou`, 'err'); showFlash(`${el.nome} já registrou seu voto.`, 'err'); return }
 
+    const isBranco = numeroInput === 'BRANCO'
+    
     const novoVoto = {
-      cpf_eleitor: cpfInput,
+      cpf_eleitor: cpf,
       nome_eleitor: el.nome,
-      numero_cand: sel.numero,
-      nome_cand: sel.nome,
-      partido_cand: sel.partido,
+      numero_cand: isBranco ? 'BRANCO' : sel.numero,
+      nome_cand: isBranco ? 'BRANCO' : sel.nome,
+      partido_cand: isBranco ? '—' : sel.partido,
       ts: new Date().toISOString()
     }
 
@@ -113,9 +117,22 @@ export default function Votar({ showFlash }) {
 
     actions.markVoted(el.id)
     actions.addVoto({ ...novoVoto, ts: new Date().toLocaleTimeString('pt-BR') })
-    addLog(`VOTO: ${el.nome} → ${sel.nome} (${sel.partido})`, 'ok')
-    showFlash(`✓ Voto registrado!\n${sel.nome} — ${sel.partido}`, 'ok')
+    
+    if (isBranco) {
+      addLog(`VOTO: ${el.nome} → BRANCO`, 'ok')
+      showFlash('✓ Voto em BRANCO registrado.', 'ok')
+    } else {
+      addLog(`VOTO: ${el.nome} → ${sel.nome} (${sel.partido})`, 'ok')
+      showFlash(`✓ Voto registrado!\n${sel.nome} — ${sel.partido}`, 'ok')
+    }
     limpar()
+  }
+
+  async function votarBranco() {
+    setNumeroInput('BRANCO')
+    setSel(null)
+    // Para confirmar o branco o usuário precisa apertar CONFIRMA depois.
+    // Ou podemos confirmar direto. Vamos confirmar direto para simplificar a usabilidade.
   }
 
   async function votarBranco() {
@@ -156,64 +173,65 @@ export default function Votar({ showFlash }) {
       </div>
 
       {/* Mural */}
-      <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3">Candidatos</div>
-      <div className="grid gap-3.5 mb-7" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
-        {!state.candidatos.length ? (
-          <div className="col-span-full text-[#444] text-[11px] tracking-widest py-6">
-            Nenhum candidato cadastrado. Peça ao administrador.
-          </div>
-        ) : state.candidatos.map(c => {
-          const votos = state.votos.filter(v => v.numero === c.numero).length
-          const isSel = sel?.numero === c.numero
-          return (
-            <div
-              key={c.id}
-              onClick={() => setSel(isSel ? null : c)}
-              className={`bg-[#161616] border rounded-xl p-5 cursor-pointer transition-all relative overflow-hidden hover:-translate-y-px hover:shadow-2xl
-                ${isSel ? 'border-green-500 bg-green-500/[0.04]' : 'border-[#222] hover:border-[#333]'}`}
-            >
-              <div className={`absolute top-0 left-0 right-0 h-0.5 transition-all ${isSel ? 'bg-green-500' : 'bg-[#222]'}`} />
-              <div className="absolute top-3 right-3 text-[9px] text-[#444]">{votos} voto{votos !== 1 ? 's' : ''}</div>
-              <div className="w-14 h-14 rounded-full bg-[#222] border border-[#2a2a2a] flex items-center justify-center overflow-hidden mb-3">
-                {c.foto_url ? <img src={c.foto_url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
-              </div>
-              <div className="font-syne font-black text-[26px] text-[#f0f0f0] leading-none tracking-tight">{c.numero}</div>
-              <div className="text-[13px] text-[#e8e8e8] mt-1">{c.nome}</div>
-              <div className="text-[9px] text-[#555] tracking-widest uppercase mt-1">{c.partido}</div>
-              {isSel && (
-                <div className="absolute bottom-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[11px] text-black font-bold">✓</div>
-              )}
+      {/* Urna Area */}
+      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 350px' }}>
+        
+        {/* Painel da Urna (Teclado) */}
+        <div className="bg-[#111] border-[4px] border-[#2a2a2a] rounded-xl p-6 flex flex-col items-center">
+          <div className="bg-[#e8e8e8] w-full max-w-[280px] h-20 rounded shadow-inner mb-6 flex flex-col justify-center items-end px-5 border border-[#ccc]">
+            <div className="text-[10px] text-[#555] font-bold tracking-widest uppercase mb-1">Número</div>
+            <div className="font-mono text-4xl text-[#080808] tracking-widest font-bold">
+              {numeroInput || '____'}
             </div>
-          )
-        })}
-      </div>
+          </div>
 
-      <hr className="border-t border-[#222] my-6" />
+          <div className="grid grid-cols-3 gap-3 mb-5 w-full max-w-[260px]">
+            {['1','2','3','4','5','6','7','8','9'].map(num => (
+              <button 
+                key={num} 
+                onClick={() => handleKeypad(num)}
+                className="bg-[#1a1a1a] border-b-4 border-[#0a0a0a] active:border-b-0 active:translate-y-1 text-[#f0f0f0] font-bold text-xl py-3 rounded hover:bg-[#222] transition-all"
+              >
+                {num}
+              </button>
+            ))}
+            <div className="col-start-2">
+              <button 
+                onClick={() => handleKeypad('0')}
+                className="w-full bg-[#1a1a1a] border-b-4 border-[#0a0a0a] active:border-b-0 active:translate-y-1 text-[#f0f0f0] font-bold text-xl py-3 rounded hover:bg-[#222] transition-all"
+              >
+                0
+              </button>
+            </div>
+          </div>
 
-      {/* Vote form + sel box */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 320px' }}>
-        <div className="bg-[#161616] border border-[#222] rounded-lg p-5">
-          <div className="font-syne font-semibold text-[13px] text-[#f0f0f0] mb-4 pb-3 border-b border-[#222]">
-            Identificação do Eleitor
+          <div className="flex gap-2 w-full max-w-[320px] mt-2">
+            <button 
+              onClick={() => { setNumeroInput('BRANCO'); setSel(null); }}
+              className="flex-1 bg-white border-b-4 border-gray-400 active:border-b-0 active:translate-y-1 text-black font-bold text-[11px] uppercase tracking-widest py-3 rounded hover:bg-gray-200 transition-all"
+            >
+              Branco
+            </button>
+            <button 
+              onClick={limpar}
+              className="flex-1 bg-[#ff4d4d] border-b-4 border-[#cc0000] active:border-b-0 active:translate-y-1 text-white font-bold text-[11px] uppercase tracking-widest py-3 rounded hover:bg-[#ff6666] transition-all"
+            >
+              Corrige
+            </button>
+            <button 
+              onClick={confirmarVoto}
+              className="flex-1 bg-[#00cc44] border-b-4 border-[#009933] active:border-b-0 active:translate-y-1 text-white font-bold text-[11px] uppercase tracking-widest py-3 rounded hover:bg-[#33dd66] transition-all"
+            >
+              Confirma
+            </button>
           </div>
-          <div className="mb-3.5">
-            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">CPF do Eleitor</label>
-            <input
-              type="text"
-              value={cpfInput}
-              onChange={e => setCpfInput(e.target.value)}
-              placeholder="Informe o CPF"
-              className="input"
-              onKeyDown={e => e.key === 'Enter' && confirmarVoto()}
-            />
+
+          <div className="w-full mt-6">
+            <LogPanel logs={logs} />
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={confirmarVoto} className="btn-primary">Confirmar Voto</button>
-            <button onClick={votarBranco} className="btn-ghost">Voto em Branco</button>
-            <button onClick={limpar} className="btn-ghost">Limpar</button>
-          </div>
-          <LogPanel logs={logs} />
         </div>
+
+        {/* Selected Info */}
         <SelBox cand={sel} />
       </div>
     </div>
