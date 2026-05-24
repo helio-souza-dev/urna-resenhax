@@ -59,8 +59,8 @@ function SelBox({ cand }) {
 export default function Votar({ showFlash }) {
   const { state, actions } = useApp()
   const [numeroInput, setNumeroInput] = useState('')
-
-
+  const [sel, setSel] = useState(null)
+  const [logs, setLogs] = useState([{ ts: 'sistema', msg: 'pronto para receber votos.', nivel: 'ok' }])
   useEffect(() => {
     if (!numeroInput) {
       setSel(null)
