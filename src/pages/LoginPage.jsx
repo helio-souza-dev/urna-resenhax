@@ -84,10 +84,10 @@ export default function LoginPage({ eleitores, admins, onLogin, onCadastro, show
         </form>
 
         {/* Link criar conta */}
-        <div className="mt-4 pt-4 border-t border-[#1a1a1a] text-center">
+        <div className="mt-3">
           <button
             onClick={onCadastro}
-            className="text-[11px] text-[#444] hover:text-[#aaa] transition-colors tracking-wide"
+            className="w-full bg-white/5 border border-[#2a2a2a] text-[#e8e8e8] font-mono text-[12px] tracking-wide py-2.5 rounded-md hover:bg-white/10 hover:border-[#444] transition-all"
           >
             Não tem conta? → Criar conta
           </button>
