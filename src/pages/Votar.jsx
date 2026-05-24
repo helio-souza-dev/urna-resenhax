@@ -1,0 +1,191 @@
+import { useState } from 'react'
+import { useApp } from '../lib/store'
+import { simularQueryCPF, getInjecaoMsg } from '../lib/sqli'
+
+function LogPanel({ logs }) {
+  return (
+    <div className="bg-[#080808] border border-[#222] rounded-md p-3.5 text-[11px] h-32 overflow-y-auto mt-4">
+      {logs.map((l, i) => (
+        <div key={i} className="flex gap-2 mb-0.5">
+          <span className="text-[#444]">[{l.ts}]</span>
+          <span className={l.nivel === 'err' ? 'text-red-400' : l.nivel === 'warn' ? 'text-yellow-400' : 'text-green-400'}>{l.msg}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SelBox({ cand }) {
+  if (!cand) return (
+    <div className="bg-[#161616] border border-[#222] rounded-lg p-5 sticky top-6">
+      <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3">Candidato Selecionado</div>
+      <div className="text-[11px] text-[#444] text-center py-5">Clique em um candidato no mural</div>
+    </div>
+  )
+
+  return (
+    <div className="bg-[#161616] border border-[#222] rounded-lg p-5 sticky top-6">
+      <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3.5">Candidato Selecionado</div>
+      <div className="flex gap-3.5 items-start mb-4 pb-4 border-b border-[#222]">
+        <div className="w-[72px] h-[72px] rounded-full border border-[#2a2a2a] overflow-hidden flex items-center justify-center flex-shrink-0 bg-[#222]">
+          {cand.foto ? <img src={cand.foto} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
+        </div>
+        <div>
+          <div className="font-syne font-black text-[22px] text-[#f0f0f0] leading-none">{cand.numero}</div>
+          <div className="text-sm text-[#e8e8e8] mt-1">{cand.nome}</div>
+          <div className="text-[9px] text-[#555] tracking-widest uppercase mt-1">{cand.partido}</div>
+        </div>
+      </div>
+      {cand.bio && (
+        <div className="mb-3.5">
+          <div className="text-[9px] text-[#555] tracking-widest uppercase mb-1.5">Bio</div>
+          <div className="text-[11px] text-[#aaa] leading-relaxed">{cand.bio}</div>
+        </div>
+      )}
+      {cand.projetos?.length > 0 && (
+        <div>
+          <div className="text-[9px] text-[#555] tracking-widest uppercase mb-2">Projetos de Lei</div>
+          <div className="flex flex-col gap-1.5">
+            {cand.projetos.map((p, i) => (
+              <div key={i} className="text-[11px] text-[#aaa] px-2.5 py-1.5 bg-[#080808] border border-[#222] rounded leading-relaxed">{p}</div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Votar({ showFlash }) {
+  const { state, actions } = useApp()
+  const [cpfInput, setCpfInput] = useState('')
+  const [sel, setSel] = useState(null)
+  const [logs, setLogs] = useState([{ ts: 'sistema', msg: 'pronto para receber votos.', nivel: 'ok' }])
+
+  function addLog(msg, nivel = 'ok') {
+    const ts = new Date().toLocaleTimeString('pt-BR')
+    setLogs(l => [...l, { ts, msg, nivel }])
+  }
+
+  function limpar() {
+    setCpfInput('')
+    setSel(null)
+  }
+
+  function confirmarVoto() {
+    if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
+    if (!sel) { showFlash('Selecione um candidato no mural.', 'err'); return }
+
+    const res = simularQueryCPF(cpfInput, state.eleitores)
+    addLog(`QUERY → SELECT * FROM eleitores WHERE cpf = '${cpfInput}'`, 'warn')
+
+    if (res.injetado) {
+      const info = getInjecaoMsg(res.tipo, state.eleitores)
+      addLog(info.log, 'err')
+      showFlash(info.flash, 'err')
+      if (info.destrutivo) actions.clearEleitoresVotos()
+      limpar()
+      return
+    }
+
+    const el = res.eleitor
+    if (!el) { addLog(`CPF ${cpfInput} não encontrado`, 'err'); showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
+    if (el.votou) { addLog(`${el.nome} já votou`, 'err'); showFlash(`${el.nome} já registrou seu voto.`, 'err'); return }
+
+    actions.markVoted(el.id)
+    actions.addVoto({
+      cpf: cpfInput,
+      nomeEleitor: el.nome,
+      numero: sel.numero,
+      nome: sel.nome,
+      partido: sel.partido,
+      ts: new Date().toLocaleTimeString('pt-BR'),
+    })
+    addLog(`VOTO: ${el.nome} → ${sel.nome} (${sel.partido})`, 'ok')
+    showFlash(`✓ Voto registrado!\n${sel.nome} — ${sel.partido}`, 'ok')
+    limpar()
+  }
+
+  function votarBranco() {
+    if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
+    const el = state.eleitores.find(e => e.cpf === cpfInput)
+    if (!el) { showFlash('CPF não encontrado.', 'err'); return }
+    if (el.votou) { showFlash(`${el.nome} já votou.`, 'err'); return }
+    actions.markVoted(el.id)
+    actions.addVoto({ cpf: cpfInput, nomeEleitor: el.nome, numero: 'BRANCO', nome: 'BRANCO', partido: '—', ts: new Date().toLocaleTimeString('pt-BR') })
+    addLog(`VOTO: ${el.nome} → BRANCO`, 'ok')
+    showFlash('✓ Voto em BRANCO registrado.', 'ok')
+    limpar()
+  }
+
+  return (
+    <div className="p-10 max-w-[1100px]">
+      <div className="mb-8 pb-5 border-b border-[#222]">
+        <h1 className="font-syne font-bold text-2xl text-[#f0f0f0] tracking-tight">Votação</h1>
+        <p className="text-[11px] text-[#555] mt-1 tracking-wide">Escolha um candidato e confirme com seu CPF</p>
+      </div>
+
+      {/* Mural */}
+      <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3">Candidatos</div>
+      <div className="grid gap-3.5 mb-7" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
+        {!state.candidatos.length ? (
+          <div className="col-span-full text-[#444] text-[11px] tracking-widest py-6">
+            Nenhum candidato cadastrado. Peça ao administrador.
+          </div>
+        ) : state.candidatos.map(c => {
+          const votos = state.votos.filter(v => v.numero === c.numero).length
+          const isSel = sel?.numero === c.numero
+          return (
+            <div
+              key={c.id}
+              onClick={() => setSel(isSel ? null : c)}
+              className={`bg-[#161616] border rounded-xl p-5 cursor-pointer transition-all relative overflow-hidden hover:-translate-y-px hover:shadow-2xl
+                ${isSel ? 'border-green-500 bg-green-500/[0.04]' : 'border-[#222] hover:border-[#333]'}`}
+            >
+              <div className={`absolute top-0 left-0 right-0 h-0.5 transition-all ${isSel ? 'bg-green-500' : 'bg-[#222]'}`} />
+              <div className="absolute top-3 right-3 text-[9px] text-[#444]">{votos} voto{votos !== 1 ? 's' : ''}</div>
+              <div className="w-14 h-14 rounded-full bg-[#222] border border-[#2a2a2a] flex items-center justify-center overflow-hidden mb-3">
+                {c.foto ? <img src={c.foto} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
+              </div>
+              <div className="font-syne font-black text-[26px] text-[#f0f0f0] leading-none tracking-tight">{c.numero}</div>
+              <div className="text-[13px] text-[#e8e8e8] mt-1">{c.nome}</div>
+              <div className="text-[9px] text-[#555] tracking-widest uppercase mt-1">{c.partido}</div>
+              {isSel && (
+                <div className="absolute bottom-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[11px] text-black font-bold">✓</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <hr className="border-t border-[#222] my-6" />
+
+      {/* Vote form + sel box */}
+      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 320px' }}>
+        <div className="bg-[#161616] border border-[#222] rounded-lg p-5">
+          <div className="font-syne font-semibold text-[13px] text-[#f0f0f0] mb-4 pb-3 border-b border-[#222]">
+            Identificação do Eleitor
+          </div>
+          <div className="mb-3.5">
+            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">CPF do Eleitor</label>
+            <input
+              type="text"
+              value={cpfInput}
+              onChange={e => setCpfInput(e.target.value)}
+              placeholder="Informe o CPF"
+              className="input"
+              onKeyDown={e => e.key === 'Enter' && confirmarVoto()}
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={confirmarVoto} className="btn-primary">Confirmar Voto</button>
+            <button onClick={votarBranco} className="btn-ghost">Voto em Branco</button>
+            <button onClick={limpar} className="btn-ghost">Limpar</button>
+          </div>
+          <LogPanel logs={logs} />
+        </div>
+        <SelBox cand={sel} />
+      </div>
+    </div>
+  )
+}

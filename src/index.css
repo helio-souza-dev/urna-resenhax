@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #080808;
+  --bg2: #0f0f0f;
+  --bg3: #161616;
+  --b1: #222;
+  --b2: #2a2a2a;
+  --b3: #333;
+  --t1: #e8e8e8;
+  --t2: #aaa;
+  --t3: #666;
+  --t4: #444;
+  --accent: #f0f0f0;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #eab308;
+  --blue: #3b82f6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; background: var(--bg); color: var(--t1); font-family: 'DM Mono', monospace; font-size: 14px; -webkit-font-smoothing: antialiased; }
+#root { height: 100%; }
+
+.font-syne { font-family: 'Syne', sans-serif; }
+.font-mono { font-family: 'DM Mono', monospace; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.pulse-dot { animation: pulse-dot 2s infinite; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.flash-show { animation: slideIn 0.2s ease forwards; }
+
+.res-bar-fill { transition: width 0.5s ease; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--b3); border-radius: 2px; }
+
+/* Shared input / button styles via @layer */
+@layer components {
+  .input {
+    @apply w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none
+    focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all;
+  }
+
+  .btn-primary {
+    @apply font-mono text-[12px] tracking-wide px-4 py-2.5 rounded-md bg-[#f0f0f0] text-[#080808] font-medium
+    hover:bg-[#ccc] transition-colors cursor-pointer border-none inline-flex items-center gap-1.5;
+  }
+
+  .btn-ghost {
+    @apply font-mono text-[12px] tracking-wide px-4 py-2.5 rounded-md bg-transparent border border-[#2a2a2a] text-[#aaa]
+    hover:border-[#333] hover:text-[#e8e8e8] transition-all cursor-pointer inline-flex items-center gap-1.5;
+  }
+
+  .btn-danger {
+    @apply font-mono text-[12px] tracking-wide px-4 py-2.5 rounded-md bg-red-500/10 border border-red-500/25 text-red-400
+    hover:bg-red-500/20 transition-all cursor-pointer inline-flex items-center gap-1.5;
+  }
+
+  .btn-sm {
+    @apply py-1.5 px-3 text-[11px];
+  }
+}

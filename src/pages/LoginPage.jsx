@@ -1,0 +1,95 @@
+import { useState } from 'react'
+import Clock from '../components/Clock'
+
+const ADM_CREDENTIALS = [
+  { cpf: '111.111.111-11', senha: 'admin123', nome: 'Administrador' },
+  { cpf: '222.222.222-22', senha: 'admin456', nome: 'Supervisor' },
+]
+
+export default function LoginPage({ eleitores, onLogin, showFlash }) {
+  const [role, setRole] = useState('eleitor')
+  const [cpf, setCpf] = useState('')
+  const [senha, setSenha] = useState('')
+
+  function handleLogin(e) {
+    e?.preventDefault()
+    if (!cpf.trim()) { showFlash('Informe o CPF.', 'err'); return }
+
+    if (role === 'adm') {
+      const adm = ADM_CREDENTIALS.find(a => a.cpf === cpf && a.senha === senha)
+      if (!adm) { showFlash('Credenciais inválidas.', 'err'); return }
+      onLogin(adm.nome, 'adm')
+    } else {
+      const el = eleitores.find(e => e.cpf === cpf)
+      if (!el) { showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
+      onLogin(el.nome, 'eleitor')
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#080808]">
+      <div className="w-[360px] bg-[#0f0f0f] border border-[#222] rounded-xl p-9">
+        <div className="font-syne font-black text-[22px] text-[#f0f0f0] mb-1 tracking-tight">VotoSec</div>
+        <div className="text-[10px] text-[#444] tracking-widest uppercase mb-7">Sistema Eleitoral</div>
+
+        {/* Tabs */}
+        <div className="flex border border-[#222] rounded-lg overflow-hidden mb-6">
+          {['eleitor', 'adm'].map(r => (
+            <button
+              key={r}
+              onClick={() => setRole(r)}
+              className={`flex-1 py-2 text-[11px] tracking-widest transition-all
+                ${role === r ? 'bg-[#161616] text-[#f0f0f0]' : 'text-[#555] hover:text-[#aaa]'}`}
+            >
+              {r === 'eleitor' ? 'Eleitor' : 'Administrador'}
+            </button>
+          ))}
+        </div>
+
+        {/* Role info */}
+        <div className="text-[10px] text-[#444] mb-4 p-3 bg-[#161616] rounded-md border border-[#222] leading-relaxed">
+          {role === 'adm'
+            ? 'Acesso administrativo. CPF e senha de administrador.'
+            : 'Acesso à cabine de votação. Informe seu CPF para votar.'}
+        </div>
+
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">CPF</label>
+            <input
+              type="text"
+              value={cpf}
+              onChange={e => setCpf(e.target.value)}
+              placeholder="000.000.000-00"
+              className="w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all"
+            />
+          </div>
+
+          {role === 'adm' && (
+            <div className="mb-4">
+              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Senha</label>
+              <input
+                type="password"
+                value={senha}
+                onChange={e => setSenha(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all"
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full mt-1 bg-[#f0f0f0] text-[#080808] font-mono text-[12px] font-medium tracking-wide py-2.5 rounded-md hover:bg-[#ccc] transition-colors"
+          >
+            Entrar
+          </button>
+        </form>
+
+        <div className="text-[10px] text-[#444] mt-4 text-center">
+          Zona 001 · Seção 0042 · <Clock />
+        </div>
+      </div>
+    </div>
+  )
+}
