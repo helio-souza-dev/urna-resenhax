@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import Clock from '../components/Clock'
 
-const ADM_CREDENTIALS = [
-  { cpf: '111.111.111-11', senha: 'admin123', nome: 'Administrador' },
-  { cpf: '222.222.222-22', senha: 'admin456', nome: 'Supervisor' },
-]
-
-export default function LoginPage({ eleitores, onLogin, showFlash }) {
+export default function LoginPage({ eleitores, admins, onLogin, onCadastro, showFlash }) {
   const [role, setRole] = useState('eleitor')
   const [cpf, setCpf] = useState('')
   const [senha, setSenha] = useState('')
@@ -16,15 +11,17 @@ export default function LoginPage({ eleitores, onLogin, showFlash }) {
     if (!cpf.trim()) { showFlash('Informe o CPF.', 'err'); return }
 
     if (role === 'adm') {
-      const adm = ADM_CREDENTIALS.find(a => a.cpf === cpf && a.senha === senha)
+      const adm = admins.find(a => a.cpf === cpf && a.senha === senha)
       if (!adm) { showFlash('Credenciais inválidas.', 'err'); return }
-      onLogin(adm.nome, 'adm')
+      onLogin(adm.nome, 'adm', adm.cpf)
     } else {
       const el = eleitores.find(e => e.cpf === cpf)
       if (!el) { showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
-      onLogin(el.nome, 'eleitor')
+      onLogin(el.nome, 'eleitor', el.cpf)
     }
   }
+
+  const inputCls = "w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all"
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#080808]">
@@ -61,7 +58,7 @@ export default function LoginPage({ eleitores, onLogin, showFlash }) {
               value={cpf}
               onChange={e => setCpf(e.target.value)}
               placeholder="000.000.000-00"
-              className="w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all"
+              className={inputCls}
             />
           </div>
 
@@ -73,7 +70,7 @@ export default function LoginPage({ eleitores, onLogin, showFlash }) {
                 value={senha}
                 onChange={e => setSenha(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#161616] border border-[#2a2a2a] rounded-md px-3.5 py-2.5 text-[13px] text-[#e8e8e8] font-mono outline-none focus:border-[#333] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] placeholder-[#444] transition-all"
+                className={inputCls}
               />
             </div>
           )}
@@ -86,7 +83,17 @@ export default function LoginPage({ eleitores, onLogin, showFlash }) {
           </button>
         </form>
 
-        <div className="text-[10px] text-[#444] mt-4 text-center">
+        {/* Link criar conta */}
+        <div className="mt-4 pt-4 border-t border-[#1a1a1a] text-center">
+          <button
+            onClick={onCadastro}
+            className="text-[11px] text-[#444] hover:text-[#aaa] transition-colors tracking-wide"
+          >
+            Não tem conta? → Criar conta
+          </button>
+        </div>
+
+        <div className="text-[10px] text-[#444] mt-3 text-center">
           Zona 001 · Seção 0042 · <Clock />
         </div>
       </div>

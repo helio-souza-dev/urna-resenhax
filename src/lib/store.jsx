@@ -6,19 +6,28 @@ const initialState = {
   candidatos: [],
   eleitores: [],
   votos: [],
+  admins: [
+    { id: 1, cpf: '111.111.111-11', senha: 'admin123', nome: 'Administrador' },
+    { id: 2, cpf: '222.222.222-22', senha: 'admin456', nome: 'Supervisor' },
+  ],
   currentUser: null,
   currentRole: null,
+  currentCpf: null,
   idC: 1,
   idE: 1,
   idV: 1,
+  idA: 3,
 }
 
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_USER':
-      return { ...state, currentUser: action.user, currentRole: action.role }
+      return { ...state, currentUser: action.user, currentRole: action.role, currentCpf: action.cpf ?? null }
     case 'LOGOUT':
-      return { ...state, currentUser: null, currentRole: null }
+      return { ...state, currentUser: null, currentRole: null, currentCpf: null }
+
+    case 'ADD_ADMIN':
+      return { ...state, admins: [...state.admins, { ...action.payload, id: state.idA }], idA: state.idA + 1 }
 
     case 'ADD_CANDIDATO':
       return { ...state, candidatos: [...state.candidatos, { ...action.payload, id: state.idC }], idC: state.idC + 1 }
@@ -46,8 +55,9 @@ export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   const actions = {
-    setUser: useCallback((user, role) => dispatch({ type: 'SET_USER', user, role }), []),
+    setUser: useCallback((user, role, cpf) => dispatch({ type: 'SET_USER', user, role, cpf }), []),
     logout: useCallback(() => dispatch({ type: 'LOGOUT' }), []),
+    addAdmin: useCallback((payload) => dispatch({ type: 'ADD_ADMIN', payload }), []),
     addCandidato: useCallback((payload) => dispatch({ type: 'ADD_CANDIDATO', payload }), []),
     removeCandidato: useCallback((id) => dispatch({ type: 'REMOVE_CANDIDATO', id }), []),
     addEleitor: useCallback((payload) => dispatch({ type: 'ADD_ELEITOR', payload }), []),
