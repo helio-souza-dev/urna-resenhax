@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useApp } from '../lib/store'
 import Badge from '../components/Badge'
+import { supabase } from '../lib/supabase'
 
 export default function CadastroCandidato({ showFlash }) {
   const { state, actions } = useApp()
@@ -26,14 +27,21 @@ export default function CadastroCandidato({ showFlash }) {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  function cadastrar() {
-    if (!numero || !nome || !partido) { showFlash('Número, nome e partido são obrigatórios.', 'err'); return }
-    if (state.candidatos.find(c => c.numero === numero)) { showFlash('Número já cadastrado.', 'err'); return }
-    const projetosArr = projetos ? projetos.split('\n').filter(l => l.trim()) : []
-    actions.addCandidato({ numero, nome, partido, bio, projetos: projetosArr, foto })
+  async function cadastrar() {
+  if (!numero || !nome || !partido) { showFlash('Número, nome e partido são obrigatórios.', 'err'); return }
+  
+  // Insere os dados diretamente no banco
+  const { error } = await supabase
+    .from('candidatos')
+    .insert([{ numero, nome, partido, bio, projetos: projetos ? projetos.split('\n') : [] }])
+
+  if (error) {
+    showFlash('Erro ao cadastrar: ' + error.message, 'err')
+  } else {
     showFlash(`Candidato ${nome} cadastrado.`, 'ok')
     limpar()
   }
+}
 
   const modalCand = modalId ? state.candidatos.find(c => c.id === modalId) : null
 

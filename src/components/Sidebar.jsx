@@ -42,7 +42,6 @@ export default function Sidebar({ currentPage, onNav, role, onLogout, userName }
 
       <nav>
         <NavItem icon="◎" label="Votar"    active={currentPage === 'votar'}    onClick={() => onNav('votar')} />
-        <NavItem icon="⊕" label="Gerar CPF" active={currentPage === 'cpf-gen'} onClick={() => onNav('cpf-gen')} />
       </nav>
 
       {/* Bottom */}

@@ -60,21 +60,7 @@ export default function CadastroPage({ onBack, showFlash }) {
         <div className="text-[10px] text-[#444] tracking-widest uppercase mb-7">Criar conta</div>
 
         {/* Tabs */}
-        <div className="flex border border-[#222] rounded-lg overflow-hidden mb-6">
-          {[
-            { key: 'eleitor', label: 'Eleitor' },
-            { key: 'adm',    label: 'Administrador' },
-          ].map(t => (
-            <button
-              key={t.key}
-              onClick={() => setRole(t.key)}
-              className={`flex-1 py-2 text-[11px] tracking-widest transition-all
-                ${role === t.key ? 'bg-[#161616] text-[#f0f0f0]' : 'text-[#555] hover:text-[#aaa]'}`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        
 
         {/* ── ELEITOR ── */}
         {role === 'eleitor' && (
@@ -131,66 +117,6 @@ export default function CadastroPage({ onBack, showFlash }) {
 
             <button type="submit" className="w-full bg-[#f0f0f0] text-[#080808] font-mono text-[12px] font-medium tracking-wide py-2.5 rounded-md hover:bg-[#ccc] transition-colors">
               Criar conta de Eleitor
-            </button>
-          </form>
-        )}
-
-        {/* ── ADMIN ── */}
-        {role === 'adm' && (
-          <form onSubmit={cadastrarAdmin}>
-            {/* CPF gerado */}
-            <div className="mb-4 p-3.5 bg-[#161616] border border-[#222] rounded-lg">
-              <div className="text-[9px] text-[#555] tracking-widest uppercase mb-2">Seu CPF gerado automaticamente</div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[15px] text-[#f0f0f0] tracking-widest">{cpfA}</span>
-                <button
-                  type="button"
-                  onClick={() => copiarCPF(cpfA)}
-                  className="text-[10px] text-[#555] hover:text-[#aaa] transition-colors border border-[#2a2a2a] rounded px-2 py-1 shrink-0"
-                >
-                  copiar
-                </button>
-              </div>
-              <div className="text-[10px] text-[#444] mt-2 leading-relaxed">
-                ⚠ Guarde esse CPF — você vai usá-lo junto com sua senha para entrar.
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Nome completo</label>
-              <input
-                type="text"
-                value={nomeA}
-                onChange={e => setNomeA(e.target.value)}
-                placeholder="Seu nome"
-                className={inputCls}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Senha</label>
-              <input
-                type="password"
-                value={senhaA}
-                onChange={e => setSenhaA(e.target.value)}
-                placeholder="Mín. 6 caracteres"
-                className={inputCls}
-              />
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Confirmar senha</label>
-              <input
-                type="password"
-                value={senhaConf}
-                onChange={e => setSenhaConf(e.target.value)}
-                placeholder="Repita a senha"
-                className={inputCls}
-              />
-            </div>
-
-            <button type="submit" className="w-full bg-[#f0f0f0] text-[#080808] font-mono text-[12px] font-medium tracking-wide py-2.5 rounded-md hover:bg-[#ccc] transition-colors">
-              Criar conta de Administrador
             </button>
           </form>
         )}

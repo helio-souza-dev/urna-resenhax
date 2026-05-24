@@ -77,7 +77,6 @@ function AppInner() {
           {page === 'eleitores'          && <ListaEleitores {...pageProps} />}
           {page === 'resultados'         && <Resultados {...pageProps} />}
           {page === 'votar'              && <Votar {...pageProps} />}
-          {page === 'cpf-gen'            && <CpfGen {...pageProps} />}
         </main>
       </div>
     </>
