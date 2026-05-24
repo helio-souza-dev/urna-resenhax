@@ -46,8 +46,8 @@ function reducer(state, action) {
 
     case 'ADD_VOTO':
       return { ...state, votos: [...state.votos, action.payload] }
-    case 'CLEAR_ELEITORES_VOTOS':
-      return { ...state, eleitores: [], votos: [] }
+    case 'RESET_VOTACAO':
+      return { ...state, votos: [], eleitores: state.eleitores.map(e => ({...e, votou: false})) }
 
     default:
       return state
@@ -67,7 +67,7 @@ export function AppProvider({ children }) {
     removeEleitor: useCallback((id) => dispatch({ type: 'REMOVE_ELEITOR', id }), []),
     markVoted: useCallback((id) => dispatch({ type: 'MARK_VOTED', id }), []),
     addVoto: useCallback((payload) => dispatch({ type: 'ADD_VOTO', payload }), []),
-    clearEleitoresVotos: useCallback(() => dispatch({ type: 'CLEAR_ELEITORES_VOTOS' }), []),
+    resetVotacao: useCallback(() => dispatch({ type: 'RESET_VOTACAO' }), []),
     setAll: useCallback((payload) => dispatch({ type: 'SET_ALL', payload }), []),
   }
 

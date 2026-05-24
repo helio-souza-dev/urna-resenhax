@@ -1,8 +1,9 @@
 import { useApp } from '../lib/store'
+import { supabase } from '../lib/supabase'
 import Badge from '../components/Badge'
 
-export default function Dashboard() {
-  const { state } = useApp()
+export default function Dashboard({ showFlash }) {
+  const { state, actions } = useApp()
   const { eleitores, votos } = state
   const votaram = eleitores.filter(e => e.votou).length
   const participacao = eleitores.length ? Math.round((votaram / eleitores.length) * 100) : 0
@@ -15,6 +16,19 @@ export default function Dashboard() {
           <h1 className="font-syne font-bold text-2xl text-[#f0f0f0] tracking-tight">Dashboard</h1>
           <p className="text-[11px] text-[#555] mt-1 tracking-wide">Visão geral do sistema</p>
         </div>
+        <button
+          onClick={async () => {
+            if (window.confirm('Tem certeza que deseja apagar todos os votos e resetar a votação? Isso não pode ser desfeito.')) {
+              await supabase.from('votos').delete().gt('id', 0)
+              await supabase.from('eleitores').update({ votou: false }).gt('id', 0)
+              actions.resetVotacao()
+              if (typeof showFlash === 'function') showFlash('Votação resetada com sucesso.', 'ok')
+            }
+          }}
+          className="btn-danger text-xs px-4 py-2"
+        >
+          Zerar Votação
+        </button>
       </div>
 
       {/* Stats */}
