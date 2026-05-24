@@ -30,19 +30,22 @@ function reducer(state, action) {
       return { ...state, admins: [...state.admins, { ...action.payload, id: state.idA }], idA: state.idA + 1 }
 
     case 'ADD_CANDIDATO':
-      return { ...state, candidatos: [...state.candidatos, { ...action.payload, id: state.idC }], idC: state.idC + 1 }
+      return { ...state, candidatos: [...state.candidatos, action.payload] }
     case 'REMOVE_CANDIDATO':
       return { ...state, candidatos: state.candidatos.filter(c => c.id !== action.id) }
 
     case 'ADD_ELEITOR':
-      return { ...state, eleitores: [...state.eleitores, { ...action.payload, id: state.idE, votou: false }], idE: state.idE + 1 }
+      return { ...state, eleitores: [...state.eleitores, action.payload] }
     case 'REMOVE_ELEITOR':
       return { ...state, eleitores: state.eleitores.filter(e => e.id !== action.id) }
     case 'MARK_VOTED':
       return { ...state, eleitores: state.eleitores.map(e => e.id === action.id ? { ...e, votou: true } : e) }
 
+    case 'SET_ALL':
+      return { ...state, eleitores: action.payload.eleitores, candidatos: action.payload.candidatos, votos: action.payload.votos }
+
     case 'ADD_VOTO':
-      return { ...state, votos: [...state.votos, { ...action.payload, id: state.idV }], idV: state.idV + 1 }
+      return { ...state, votos: [...state.votos, action.payload] }
     case 'CLEAR_ELEITORES_VOTOS':
       return { ...state, eleitores: [], votos: [] }
 
@@ -65,6 +68,7 @@ export function AppProvider({ children }) {
     markVoted: useCallback((id) => dispatch({ type: 'MARK_VOTED', id }), []),
     addVoto: useCallback((payload) => dispatch({ type: 'ADD_VOTO', payload }), []),
     clearEleitoresVotos: useCallback(() => dispatch({ type: 'CLEAR_ELEITORES_VOTOS' }), []),
+    setAll: useCallback((payload) => dispatch({ type: 'SET_ALL', payload }), []),
   }
 
   return <AppContext.Provider value={{ state, actions }}>{children}</AppContext.Provider>

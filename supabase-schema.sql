@@ -47,16 +47,15 @@ alter table eleitores  enable row level security;
 alter table votos      enable row level security;
 
 -- Admins (via service_role) têm acesso total
--- Anon pode ler candidatos
-create policy "candidatos_read" on candidatos
-  for select using (true);
+-- Para o nosso jogo RP, vamos permitir acesso total (leitura e gravação) de forma anônima
+create policy "candidatos_all" on candidatos
+  for all using (true) with check (true);
 
--- Anon NÃO pode ler eleitores (dados sensíveis)
-create policy "eleitores_insert" on eleitores
-  for insert with check (true);  -- somente admin insere na prática
+create policy "eleitores_all" on eleitores
+  for all using (true) with check (true);
 
--- Eleitores autenticados lêem apenas seu próprio registro
--- (para um app com auth de eleitor via Supabase Auth, ajuste aqui)
+create policy "votos_all" on votos
+  for all using (true) with check (true);
 
 -- ====================================================
 --  FUNÇÕES AUXILIARES

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../lib/store'
 import { simularQueryCPF, getInjecaoMsg } from '../lib/sqli'
+import { supabase } from '../lib/supabase'
 
 function LogPanel({ logs }) {
   return (
@@ -28,7 +29,7 @@ function SelBox({ cand }) {
       <div className="text-[9px] text-[#555] tracking-widest uppercase mb-3.5">Candidato Selecionado</div>
       <div className="flex gap-3.5 items-start mb-4 pb-4 border-b border-[#222]">
         <div className="w-[72px] h-[72px] rounded-full border border-[#2a2a2a] overflow-hidden flex items-center justify-center flex-shrink-0 bg-[#222]">
-          {cand.foto ? <img src={cand.foto} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
+          {cand.foto_url ? <img src={cand.foto_url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
         </div>
         <div>
           <div className="font-syne font-black text-[22px] text-[#f0f0f0] leading-none">{cand.numero}</div>
@@ -72,7 +73,7 @@ export default function Votar({ showFlash }) {
     setSel(null)
   }
 
-  function confirmarVoto() {
+  async function confirmarVoto() {
     if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
     if (!sel) { showFlash('Selecione um candidato no mural.', 'err'); return }
 
@@ -92,27 +93,56 @@ export default function Votar({ showFlash }) {
     if (!el) { addLog(`CPF ${cpfInput} não encontrado`, 'err'); showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
     if (el.votou) { addLog(`${el.nome} já votou`, 'err'); showFlash(`${el.nome} já registrou seu voto.`, 'err'); return }
 
+    const novoVoto = {
+      cpf_eleitor: cpfInput,
+      nome_eleitor: el.nome,
+      numero_cand: sel.numero,
+      nome_cand: sel.nome,
+      partido_cand: sel.partido,
+      ts: new Date().toISOString()
+    }
+
+    // Grava no supabase
+    const { error: errVoto } = await supabase.from('votos').insert([novoVoto]).select()
+    const { error: errEl } = await supabase.from('eleitores').update({ votou: true }).eq('id', el.id)
+
+    if (errVoto || errEl) {
+      showFlash('Erro ao processar voto no banco.', 'err')
+      return
+    }
+
     actions.markVoted(el.id)
-    actions.addVoto({
-      cpf: cpfInput,
-      nomeEleitor: el.nome,
-      numero: sel.numero,
-      nome: sel.nome,
-      partido: sel.partido,
-      ts: new Date().toLocaleTimeString('pt-BR'),
-    })
+    actions.addVoto({ ...novoVoto, ts: new Date().toLocaleTimeString('pt-BR') })
     addLog(`VOTO: ${el.nome} → ${sel.nome} (${sel.partido})`, 'ok')
     showFlash(`✓ Voto registrado!\n${sel.nome} — ${sel.partido}`, 'ok')
     limpar()
   }
 
-  function votarBranco() {
+  async function votarBranco() {
     if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
     const el = state.eleitores.find(e => e.cpf === cpfInput)
     if (!el) { showFlash('CPF não encontrado.', 'err'); return }
     if (el.votou) { showFlash(`${el.nome} já votou.`, 'err'); return }
+    
+    const novoVoto = {
+      cpf_eleitor: cpfInput,
+      nome_eleitor: el.nome,
+      numero_cand: 'BRANCO',
+      nome_cand: 'BRANCO',
+      partido_cand: '—',
+      ts: new Date().toISOString()
+    }
+
+    const { error: errVoto } = await supabase.from('votos').insert([novoVoto]).select()
+    const { error: errEl } = await supabase.from('eleitores').update({ votou: true }).eq('id', el.id)
+
+    if (errVoto || errEl) {
+      showFlash('Erro ao processar voto no banco.', 'err')
+      return
+    }
+
     actions.markVoted(el.id)
-    actions.addVoto({ cpf: cpfInput, nomeEleitor: el.nome, numero: 'BRANCO', nome: 'BRANCO', partido: '—', ts: new Date().toLocaleTimeString('pt-BR') })
+    actions.addVoto({ ...novoVoto, ts: new Date().toLocaleTimeString('pt-BR') })
     addLog(`VOTO: ${el.nome} → BRANCO`, 'ok')
     showFlash('✓ Voto em BRANCO registrado.', 'ok')
     limpar()
@@ -145,7 +175,7 @@ export default function Votar({ showFlash }) {
               <div className={`absolute top-0 left-0 right-0 h-0.5 transition-all ${isSel ? 'bg-green-500' : 'bg-[#222]'}`} />
               <div className="absolute top-3 right-3 text-[9px] text-[#444]">{votos} voto{votos !== 1 ? 's' : ''}</div>
               <div className="w-14 h-14 rounded-full bg-[#222] border border-[#2a2a2a] flex items-center justify-center overflow-hidden mb-3">
-                {c.foto ? <img src={c.foto} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
+                {c.foto_url ? <img src={c.foto_url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444] text-center leading-relaxed">sem<br />foto</span>}
               </div>
               <div className="font-syne font-black text-[26px] text-[#f0f0f0] leading-none tracking-tight">{c.numero}</div>
               <div className="text-[13px] text-[#e8e8e8] mt-1">{c.nome}</div>

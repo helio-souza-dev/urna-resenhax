@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../lib/store'
+import { supabase } from '../lib/supabase'
 
 export default function CadastroEleitor({ showFlash }) {
   const { actions } = useApp()
@@ -9,11 +10,27 @@ export default function CadastroEleitor({ showFlash }) {
 
   function limpar() { setForm({ nome: '', cpf: '', nasc: '', titulo: '', zona: '', email: '' }) }
 
-  function cadastrar() {
-    const { nome, cpf } = form
+  async function cadastrar() {
+    const { nome, cpf, nasc, titulo, zona, email } = form
     if (!nome || !cpf) { showFlash('Nome e CPF são obrigatórios.', 'err'); return }
-    // check dup handled in store
-    actions.addEleitor(form)
+    
+    const novoEleitor = {
+      nome, cpf,
+      nasc: nasc || null,
+      titulo: titulo || null,
+      zona: zona || null,
+      email: email || null,
+      votou: false
+    }
+
+    const { data, error } = await supabase.from('eleitores').insert([novoEleitor]).select()
+    
+    if (error) {
+      showFlash('Erro ao salvar no banco: ' + error.message, 'err')
+      return
+    }
+
+    actions.addEleitor(data[0])
     showFlash(`Eleitor "${nome}" cadastrado.`, 'ok')
     limpar()
   }

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppProvider, useApp } from './lib/store'
 import { useFlash } from './hooks/useFlash'
+import { supabase } from './lib/supabase'
 import Flash from './components/Flash'
 import Sidebar from './components/Sidebar'
 import LoginPage from './pages/LoginPage'
@@ -18,6 +19,34 @@ function AppInner() {
   const { flash, showFlash } = useFlash()
   const [page, setPage] = useState('votar')
   const [screen, setScreen] = useState('login') // 'login' | 'cadastro' | 'app'
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      const [resC, resE, resV] = await Promise.all([
+        supabase.from('candidatos').select('*'),
+        supabase.from('eleitores').select('*'),
+        supabase.from('votos').select('*')
+      ])
+      
+      if (resC.error || resE.error || resV.error) {
+        showFlash('Erro ao carregar dados do banco.', 'err')
+      } else {
+        actions.setAll({
+          candidatos: resC.data,
+          eleitores: resE.data,
+          votos: resV.data
+        })
+      }
+      setLoading(false)
+    }
+    loadData()
+  }, [])
+
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#080808] text-[#f0f0f0] font-mono text-sm tracking-widest">CARREGANDO DADOS...</div>
+  }
 
   const isLoggedIn = !!state.currentUser
 

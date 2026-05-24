@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { gerarCPF } from '../lib/cpf'
 import { useApp } from '../lib/store'
+import { supabase } from '../lib/supabase'
 import Clock from '../components/Clock'
 
 export default function CadastroPage({ onBack, showFlash }) {
@@ -24,12 +25,21 @@ export default function CadastroPage({ onBack, showFlash }) {
     showFlash('CPF copiado!', 'ok')
   }
 
-  function cadastrarEleitor(e) {
+  async function cadastrarEleitor(e) {
     e?.preventDefault()
     if (!nomeE.trim()) { showFlash('Informe seu nome.', 'err'); return }
     if (state.eleitores.find(el => el.cpf === cpfE)) { showFlash('CPF já cadastrado.', 'err'); return }
 
-    actions.addEleitor({ nome: nomeE, cpf: cpfE, nasc: nascE, email: emailE, titulo: '', zona: '001' })
+    const novoEleitor = { nome: nomeE, cpf: cpfE, nasc: nascE || null, email: emailE || null, titulo: '', zona: '001', votou: false }
+    
+    const { data, error } = await supabase.from('eleitores').insert([novoEleitor]).select()
+    
+    if (error) {
+      showFlash('Erro ao salvar no banco de dados.', 'err')
+      return
+    }
+
+    actions.addEleitor(data[0])
     showFlash(`Conta criada! Seu CPF de acesso: ${cpfE}`, 'ok')
     onBack()
   }

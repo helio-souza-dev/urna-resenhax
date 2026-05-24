@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../lib/store'
+import { supabase } from '../lib/supabase'
 import Badge from '../components/Badge'
 
 export default function ListaEleitores({ showFlash }) {
@@ -48,7 +49,15 @@ export default function ListaEleitores({ showFlash }) {
                   {e.votou ? <Badge variant="green">Votou</Badge> : <Badge>Pendente</Badge>}
                 </td>
                 <td className="px-3.5 py-3">
-                  <button onClick={() => { actions.removeEleitor(e.id); showFlash('Eleitor removido.', 'warn') }} className="btn-danger btn-sm">✕</button>
+                  <button onClick={async () => {
+                    const { error } = await supabase.from('eleitores').delete().eq('id', e.id);
+                    if (!error) {
+                      actions.removeEleitor(e.id);
+                      showFlash('Eleitor removido.', 'warn');
+                    } else {
+                      showFlash('Erro ao remover.', 'err');
+                    }
+                  }} className="btn-danger btn-sm">✕</button>
                 </td>
               </tr>
             ))}

@@ -30,14 +30,15 @@ export default function CadastroCandidato({ showFlash }) {
   async function cadastrar() {
   if (!numero || !nome || !partido) { showFlash('Número, nome e partido são obrigatórios.', 'err'); return }
   
-  // Insere os dados diretamente no banco
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('candidatos')
-    .insert([{ numero, nome, partido, bio, projetos: projetos ? projetos.split('\n') : [] }])
+    .insert([{ numero, nome, partido, bio, projetos: projetos ? projetos.split('\n') : [], foto_url: foto }])
+    .select()
 
   if (error) {
     showFlash('Erro ao cadastrar: ' + error.message, 'err')
   } else {
+    actions.addCandidato(data[0])
     showFlash(`Candidato ${nome} cadastrado.`, 'ok')
     limpar()
   }
@@ -114,8 +115,8 @@ export default function CadastroCandidato({ showFlash }) {
               <tr key={c.id} className="border-b border-[#222] last:border-0 hover:bg-[#161616] transition-colors">
                 <td className="px-3.5 py-3 text-[#555]">{c.numero}</td>
                 <td className="px-3.5 py-3">
-                  {c.foto
-                    ? <img src={c.foto} className="w-8 h-8 rounded-full object-cover border border-[#2a2a2a]" alt="" />
+                  {c.foto_url
+                    ? <img src={c.foto_url} className="w-8 h-8 rounded-full object-cover border border-[#2a2a2a]" alt="" />
                     : <div className="w-8 h-8 rounded-full bg-[#222] border border-[#2a2a2a] flex items-center justify-center text-[9px] text-[#444]">sem</div>
                   }
                 </td>
@@ -124,7 +125,10 @@ export default function CadastroCandidato({ showFlash }) {
                 <td className="px-3.5 py-3">
                   <div className="flex gap-1.5">
                     <button onClick={() => setModalId(c.id)} className="btn-ghost btn-sm">Ver</button>
-                    <button onClick={() => { actions.removeCandidato(c.id); showFlash('Candidato removido.', 'warn') }} className="btn-danger btn-sm">✕</button>
+                    <button onClick={async () => { 
+                      const { error } = await supabase.from('candidatos').delete().eq('id', c.id);
+                      if (!error) { actions.removeCandidato(c.id); showFlash('Candidato removido.', 'warn'); } 
+                    }} className="btn-danger btn-sm">✕</button>
                   </div>
                 </td>
               </tr>
@@ -142,7 +146,7 @@ export default function CadastroCandidato({ showFlash }) {
             </div>
             <div className="flex gap-4 items-start mb-4">
               <div className="w-[72px] h-[72px] rounded-full overflow-hidden border border-[#2a2a2a] flex-shrink-0 bg-[#222] flex items-center justify-center">
-                {modalCand.foto ? <img src={modalCand.foto} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444]">sem foto</span>}
+                {modalCand.foto_url ? <img src={modalCand.foto_url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-[#444]">sem foto</span>}
               </div>
               <div>
                 <div className="font-syne font-black text-[22px] text-[#f0f0f0] leading-none">{modalCand.numero}</div>
