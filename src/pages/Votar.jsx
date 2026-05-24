@@ -135,35 +135,7 @@ export default function Votar({ showFlash }) {
     // Ou podemos confirmar direto. Vamos confirmar direto para simplificar a usabilidade.
   }
 
-  async function votarBranco() {
-    if (!cpfInput.trim()) { showFlash('Informe o CPF.', 'err'); return }
-    const el = state.eleitores.find(e => e.cpf === cpfInput)
-    if (!el) { showFlash('CPF não encontrado.', 'err'); return }
-    if (el.votou) { showFlash(`${el.nome} já votou.`, 'err'); return }
-    
-    const novoVoto = {
-      cpf_eleitor: cpfInput,
-      nome_eleitor: el.nome,
-      numero_cand: 'BRANCO',
-      nome_cand: 'BRANCO',
-      partido_cand: '—',
-      ts: new Date().toISOString()
-    }
 
-    const { error: errVoto } = await supabase.from('votos').insert([novoVoto]).select()
-    const { error: errEl } = await supabase.from('eleitores').update({ votou: true }).eq('id', el.id)
-
-    if (errVoto || errEl) {
-      showFlash('Erro ao processar voto no banco.', 'err')
-      return
-    }
-
-    actions.markVoted(el.id)
-    actions.addVoto({ ...novoVoto, ts: new Date().toLocaleTimeString('pt-BR') })
-    addLog(`VOTO: ${el.nome} → BRANCO`, 'ok')
-    showFlash('✓ Voto em BRANCO registrado.', 'ok')
-    limpar()
-  }
 
   return (
     <div className="p-10 max-w-[1100px]">
