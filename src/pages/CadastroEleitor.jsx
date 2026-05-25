@@ -4,18 +4,18 @@ import { supabase } from '../lib/supabase'
 
 export default function CadastroEleitor({ showFlash }) {
   const { actions } = useApp()
-  const [form, setForm] = useState({ nome: '', cpf: '', nasc: '', titulo: '', zona: '', email: '' })
+  const [form, setForm] = useState({ nome: '', usuario: '', senha: '', nasc: '', titulo: '', zona: '', email: '' })
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
-  function limpar() { setForm({ nome: '', cpf: '', nasc: '', titulo: '', zona: '', email: '' }) }
+  function limpar() { setForm({ nome: '', usuario: '', senha: '', nasc: '', titulo: '', zona: '', email: '' }) }
 
   async function cadastrar() {
-    const { nome, cpf, nasc, titulo, zona, email } = form
-    if (!nome || !cpf) { showFlash('Nome e CPF são obrigatórios.', 'err'); return }
+    const { nome, usuario, senha, nasc, titulo, zona, email } = form
+    if (!nome || !usuario || !senha) { showFlash('Nome, Usuário e Senha são obrigatórios.', 'err'); return }
     
     const novoEleitor = {
-      nome, cpf,
+      nome, usuario, senha,
       nasc: nasc || null,
       titulo: titulo || null,
       zona: zona || null,
@@ -37,7 +37,8 @@ export default function CadastroEleitor({ showFlash }) {
 
   const fields = [
     { key: 'nome', label: 'Nome Completo', placeholder: 'Nome do eleitor', full: true, type: 'text' },
-    { key: 'cpf', label: 'CPF', placeholder: '000.000.000-00', type: 'text' },
+    { key: 'usuario', label: 'Usuário', placeholder: 'usuario123', type: 'text' },
+    { key: 'senha', label: 'Senha', placeholder: '••••••••', type: 'password' },
     { key: 'nasc', label: 'Data de Nascimento', type: 'date' },
     { key: 'titulo', label: 'Título de Eleitor', placeholder: '0000 0000 0000', type: 'text' },
     { key: 'zona', label: 'Zona Eleitoral', placeholder: '001', type: 'text' },

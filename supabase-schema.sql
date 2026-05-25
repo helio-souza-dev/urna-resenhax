@@ -19,7 +19,8 @@ create table if not exists candidatos (
 create table if not exists eleitores (
   id        serial primary key,
   nome      text not null,
-  cpf       text unique not null,
+  usuario   text unique not null,
+  senha     text not null,
   nasc      date,
   titulo    text,
   zona      text,
@@ -30,13 +31,13 @@ create table if not exists eleitores (
 
 -- VOTOS
 create table if not exists votos (
-  id             serial primary key,
-  cpf_eleitor    text not null references eleitores(cpf),
-  nome_eleitor   text not null,
-  numero_cand    text not null,
-  nome_cand      text not null,
-  partido_cand   text,
-  ts             timestamptz default now()
+  id              serial primary key,
+  usuario_eleitor text not null references eleitores(usuario),
+  nome_eleitor    text not null,
+  numero_cand     text not null,
+  nome_cand       text not null,
+  partido_cand    text,
+  ts              timestamptz default now()
 );
 
 -- ====================================================

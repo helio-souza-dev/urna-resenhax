@@ -7,12 +7,12 @@ const initialState = {
   eleitores: [],
   votos: [],
   admins: [
-    { id: 1, cpf: '111.111.111-11', senha: 'admin123', nome: 'Administrador' },
-    { id: 2, cpf: '222.222.222-22', senha: 'admin456', nome: 'Supervisor' },
+    { id: 1, usuario: 'admin', senha: '123', nome: 'Administrador' },
+    { id: 2, usuario: 'super', senha: '123', nome: 'Supervisor' },
   ],
   currentUser: null,
   currentRole: null,
-  currentCpf: null,
+  currentUsuario: null,
   idC: 1,
   idE: 1,
   idV: 1,
@@ -22,9 +22,9 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_USER':
-      return { ...state, currentUser: action.user, currentRole: action.role, currentCpf: action.cpf ?? null }
+      return { ...state, currentUser: action.user, currentRole: action.role, currentUsuario: action.usuario ?? null }
     case 'LOGOUT':
-      return { ...state, currentUser: null, currentRole: null, currentCpf: null }
+      return { ...state, currentUser: null, currentRole: null, currentUsuario: null }
 
     case 'ADD_ADMIN':
       return { ...state, admins: [...state.admins, { ...action.payload, id: state.idA }], idA: state.idA + 1 }

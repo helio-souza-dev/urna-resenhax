@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { gerarCPF } from '../lib/cpf'
 import { useApp } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import Clock from '../components/Clock'
@@ -10,27 +9,19 @@ export default function CadastroPage({ onBack, showFlash }) {
 
   // Eleitor form
   const [nomeE, setNomeE] = useState('')
-  const [cpfE] = useState(() => gerarCPF()) // gerado uma vez, fixo
+  const [usuarioE, setUsuarioE] = useState('')
+  const [senhaE, setSenhaE] = useState('')
   const [nascE, setNascE] = useState('')
   const [emailE, setEmailE] = useState('')
-
-  // Admin form
-  const [nomeA, setNomeA] = useState('')
-  const [cpfA] = useState(() => gerarCPF())
-  const [senhaA, setSenhaA] = useState('')
-  const [senhaConf, setSenhaConf] = useState('')
-
-  function copiarCPF(cpf) {
-    navigator.clipboard.writeText(cpf)
-    showFlash('CPF copiado!', 'ok')
-  }
 
   async function cadastrarEleitor(e) {
     e?.preventDefault()
     if (!nomeE.trim()) { showFlash('Informe seu nome.', 'err'); return }
-    if (state.eleitores.find(el => el.cpf === cpfE)) { showFlash('CPF já cadastrado.', 'err'); return }
+    if (!usuarioE.trim()) { showFlash('Informe um usuário.', 'err'); return }
+    if (!senhaE || senhaE.length < 4) { showFlash('Senha muito curta.', 'err'); return }
+    if (state.eleitores.find(el => el.usuario === usuarioE)) { showFlash('Usuário já cadastrado.', 'err'); return }
 
-    const novoEleitor = { nome: nomeE, cpf: cpfE, nasc: nascE || null, email: emailE || null, titulo: '', zona: '001', votou: false }
+    const novoEleitor = { nome: nomeE, usuario: usuarioE, senha: senhaE, nasc: nascE || null, email: emailE || null, titulo: '', zona: '001', votou: false }
     
     const { data, error } = await supabase.from('eleitores').insert([novoEleitor]).select()
     
@@ -40,7 +31,7 @@ export default function CadastroPage({ onBack, showFlash }) {
     }
 
     actions.addEleitor(data[0])
-    showFlash(`Conta criada! Seu CPF de acesso: ${cpfE}`, 'ok')
+    showFlash(`Conta criada com sucesso!`, 'ok')
     onBack()
   }
 
@@ -75,22 +66,26 @@ export default function CadastroPage({ onBack, showFlash }) {
         {/* ── ELEITOR ── */}
         {role === 'eleitor' && (
           <form onSubmit={cadastrarEleitor}>
-            {/* CPF gerado */}
-            <div className="mb-4 p-3.5 bg-[#161616] border border-[#222] rounded-lg">
-              <div className="text-[9px] text-[#555] tracking-widest uppercase mb-2">Seu CPF gerado automaticamente</div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[15px] text-[#f0f0f0] tracking-widest">{cpfE}</span>
-                <button
-                  type="button"
-                  onClick={() => copiarCPF(cpfE)}
-                  className="text-[10px] text-[#555] hover:text-[#aaa] transition-colors border border-[#2a2a2a] rounded px-2 py-1 shrink-0"
-                >
-                  copiar
-                </button>
-              </div>
-              <div className="text-[10px] text-[#444] mt-2 leading-relaxed">
-                ⚠ Guarde esse CPF — você vai precisar dele para votar.
-              </div>
+            <div className="mb-3">
+              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Usuário</label>
+              <input
+                type="text"
+                value={usuarioE}
+                onChange={e => setUsuarioE(e.target.value)}
+                placeholder="Seu usuário"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Senha</label>
+              <input
+                type="password"
+                value={senhaE}
+                onChange={e => setSenhaE(e.target.value)}
+                placeholder="••••••••"
+                className={inputCls}
+              />
             </div>
 
             <div className="mb-3">

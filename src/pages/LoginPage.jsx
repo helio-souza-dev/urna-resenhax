@@ -3,21 +3,22 @@ import Clock from '../components/Clock'
 
 export default function LoginPage({ eleitores, admins, onLogin, onCadastro, showFlash }) {
   const [role, setRole] = useState('eleitor')
-  const [cpf, setCpf] = useState('')
+  const [usuario, setUsuario] = useState('')
   const [senha, setSenha] = useState('')
 
   function handleLogin(e) {
     e?.preventDefault()
-    if (!cpf.trim()) { showFlash('Informe o CPF.', 'err'); return }
+    if (!usuario.trim()) { showFlash('Informe o Usuário.', 'err'); return }
+    if (!senha.trim()) { showFlash('Informe a Senha.', 'err'); return }
 
     if (role === 'adm') {
-      const adm = admins.find(a => a.cpf === cpf && a.senha === senha)
+      const adm = admins.find(a => a.usuario === usuario && a.senha === senha)
       if (!adm) { showFlash('Credenciais inválidas.', 'err'); return }
-      onLogin(adm.nome, 'adm', adm.cpf)
+      onLogin(adm.nome, 'adm', adm.usuario)
     } else {
-      const el = eleitores.find(e => e.cpf === cpf)
-      if (!el) { showFlash('CPF não encontrado. Procure o mesário.', 'err'); return }
-      onLogin(el.nome, 'eleitor', el.cpf)
+      const el = eleitores.find(e => e.usuario === usuario && e.senha === senha)
+      if (!el) { showFlash('Usuário ou senha incorretos.', 'err'); return }
+      onLogin(el.nome, 'eleitor', el.usuario)
     }
   }
 
@@ -46,34 +47,32 @@ export default function LoginPage({ eleitores, admins, onLogin, onCadastro, show
         {/* Role info */}
         <div className="text-[10px] text-[#444] mb-4 p-3 bg-[#161616] rounded-md border border-[#222] leading-relaxed">
           {role === 'adm'
-            ? 'Acesso administrativo. CPF e senha de administrador.'
-            : 'Acesso à cabine de votação. Informe seu CPF para votar.'}
+            ? 'Acesso administrativo. Usuário e senha de administrador.'
+            : 'Acesso à cabine de votação. Informe seu usuário e senha.'}
         </div>
 
         <form onSubmit={handleLogin}>
           <div className="mb-3">
-            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">CPF</label>
+            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Usuário</label>
             <input
               type="text"
-              value={cpf}
-              onChange={e => setCpf(e.target.value)}
-              placeholder="000.000.000-00"
+              value={usuario}
+              onChange={e => setUsuario(e.target.value)}
+              placeholder="Digite seu usuário"
               className={inputCls}
             />
           </div>
 
-          {role === 'adm' && (
-            <div className="mb-4">
-              <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Senha</label>
-              <input
-                type="password"
-                value={senha}
-                onChange={e => setSenha(e.target.value)}
-                placeholder="••••••••"
-                className={inputCls}
-              />
-            </div>
-          )}
+          <div className="mb-4">
+            <label className="block text-[10px] text-[#555] tracking-widest uppercase mb-1.5">Senha</label>
+            <input
+              type="password"
+              value={senha}
+              onChange={e => setSenha(e.target.value)}
+              placeholder="••••••••"
+              className={inputCls}
+            />
+          </div>
 
           <button
             type="submit"

@@ -12,7 +12,6 @@ import CadastroEleitor from './pages/CadastroEleitor'
 import ListaEleitores from './pages/ListaEleitores'
 import Resultados from './pages/Resultados'
 import Votar from './pages/Votar'
-import CpfGen from './pages/CpfGen'
 
 function AppInner() {
   const { state, actions } = useApp()
@@ -50,8 +49,8 @@ function AppInner() {
 
   const isLoggedIn = !!state.currentUser
 
-  function handleLogin(nome, role, cpf) {
-    actions.setUser(nome, role, cpf)
+  function handleLogin(nome, role, usuario) {
+    actions.setUser(nome, role, usuario)
     setScreen('app')
     setPage(role === 'adm' ? 'dashboard' : 'votar')
   }

@@ -8,7 +8,7 @@ export default function ListaEleitores({ showFlash }) {
   const [busca, setBusca] = useState('')
 
   const lista = state.eleitores.filter(e =>
-    e.nome.toLowerCase().includes(busca.toLowerCase()) || e.cpf.includes(busca)
+    e.nome.toLowerCase().includes(busca.toLowerCase()) || e.usuario.includes(busca)
   )
 
   return (
@@ -31,7 +31,7 @@ export default function ListaEleitores({ showFlash }) {
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="bg-[#161616] border-b border-[#222]">
-              {['Nome', 'CPF', 'Título', 'Zona', 'Status', ''].map((h, i) => (
+              {['Nome', 'Usuário', 'Título', 'Zona', 'Status', ''].map((h, i) => (
                 <th key={i} className="px-3.5 py-2.5 text-left text-[9px] tracking-widest uppercase text-[#555] font-normal">{h}</th>
               ))}
             </tr>
@@ -42,7 +42,7 @@ export default function ListaEleitores({ showFlash }) {
             ) : lista.map(e => (
               <tr key={e.id} className="border-b border-[#222] last:border-0 hover:bg-[#161616] transition-colors">
                 <td className="px-3.5 py-3">{e.nome}</td>
-                <td className="px-3.5 py-3 text-[#555]">{e.cpf}</td>
+                <td className="px-3.5 py-3 text-[#555]">{e.usuario}</td>
                 <td className="px-3.5 py-3 text-[#555]">{e.titulo || '—'}</td>
                 <td className="px-3.5 py-3 text-[#555]">{e.zona || '—'}</td>
                 <td className="px-3.5 py-3">

@@ -87,18 +87,18 @@ export default function Votar({ showFlash }) {
   }
 
   async function confirmarVoto() {
-    const cpf = state.currentCpf
-    if (!cpf) { showFlash('Erro: Usuário não identificado.', 'err'); return }
+    const usuario = state.currentUsuario
+    if (!usuario) { showFlash('Erro: Usuário não identificado.', 'err'); return }
     if (!sel && numeroInput !== 'BRANCO') { showFlash('Número de candidato inválido ou não selecionado.', 'err'); return }
 
-    const el = state.eleitores.find(e => e.cpf === cpf)
+    const el = state.eleitores.find(e => e.usuario === usuario)
     if (!el) { addLog(`Eleitor não encontrado no banco local`, 'err'); showFlash('Erro de sessão do eleitor.', 'err'); return }
     if (el.votou) { addLog(`${el.nome} já votou`, 'err'); showFlash(`${el.nome} já registrou seu voto.`, 'err'); return }
 
     const isBranco = numeroInput === 'BRANCO'
     
     const novoVoto = {
-      cpf_eleitor: cpf,
+      usuario_eleitor: usuario,
       nome_eleitor: el.nome,
       numero_cand: isBranco ? 'BRANCO' : sel.numero,
       nome_cand: isBranco ? 'BRANCO' : sel.nome,
@@ -141,7 +141,7 @@ export default function Votar({ showFlash }) {
     <div className="p-10 max-w-[1100px]">
       <div className="mb-8 pb-5 border-b border-[#222]">
         <h1 className="font-syne font-bold text-2xl text-[#f0f0f0] tracking-tight">Votação</h1>
-        <p className="text-[11px] text-[#555] mt-1 tracking-wide">Escolha um candidato e confirme com seu CPF</p>
+        <p className="text-[11px] text-[#555] mt-1 tracking-wide">Escolha um candidato e confirme seu voto</p>
       </div>
 
       {/* Mural */}
