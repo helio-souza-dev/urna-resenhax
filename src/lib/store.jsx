@@ -1,6 +1,8 @@
-import { createContext, useContext, useReducer, useCallback } from 'react'
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
 
 const AppContext = createContext(null)
+
+const savedUser = JSON.parse(localStorage.getItem('votosec_user') || 'null')
 
 const initialState = {
   candidatos: [],
@@ -10,9 +12,9 @@ const initialState = {
     { id: 1, usuario: 'admin', senha: '123', nome: 'Administrador' },
     { id: 2, usuario: 'super', senha: '123', nome: 'Supervisor' },
   ],
-  currentUser: null,
-  currentRole: null,
-  currentUsuario: null,
+  currentUser: savedUser?.nome || null,
+  currentRole: savedUser?.role || null,
+  currentUsuario: savedUser?.usuario || null,
   idC: 1,
   idE: 1,
   idV: 1,
@@ -57,8 +59,20 @@ function reducer(state, action) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
+  useEffect(() => {
+    if (state.currentUser) {
+      localStorage.setItem('votosec_user', JSON.stringify({
+        nome: state.currentUser,
+        role: state.currentRole,
+        usuario: state.currentUsuario
+      }))
+    } else {
+      localStorage.removeItem('votosec_user')
+    }
+  }, [state.currentUser, state.currentRole, state.currentUsuario])
+
   const actions = {
-    setUser: useCallback((user, role, cpf) => dispatch({ type: 'SET_USER', user, role, cpf }), []),
+    setUser: useCallback((user, role, usuario) => dispatch({ type: 'SET_USER', user, role, usuario }), []),
     logout: useCallback(() => dispatch({ type: 'LOGOUT' }), []),
     addAdmin: useCallback((payload) => dispatch({ type: 'ADD_ADMIN', payload }), []),
     addCandidato: useCallback((payload) => dispatch({ type: 'ADD_CANDIDATO', payload }), []),

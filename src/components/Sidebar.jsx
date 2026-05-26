@@ -53,9 +53,9 @@ export default function Sidebar({ currentPage, onNav, role, onLogout, userName }
         <Clock className="text-[10px] text-[#444] mt-1 block" />
         <button
           onClick={onLogout}
-          className="text-[10px] text-[#555] mt-2.5 hover:text-[#e8e8e8] transition-colors"
+          className="w-full mt-3 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] tracking-widest uppercase py-2 rounded hover:bg-red-500/20 hover:text-red-300 transition-all flex items-center justify-center gap-1.5"
         >
-          → Sair ({userName})
+          <span>⏻</span> Fechar Sessão
         </button>
       </div>
     </aside>

@@ -16,8 +16,8 @@ import Votar from './pages/Votar'
 function AppInner() {
   const { state, actions } = useApp()
   const { flash, showFlash } = useFlash()
-  const [page, setPage] = useState('votar')
-  const [screen, setScreen] = useState('login') // 'login' | 'cadastro' | 'app'
+  const [page, setPage] = useState(state.currentRole === 'adm' ? 'dashboard' : 'votar')
+  const [screen, setScreen] = useState(state.currentUser ? 'app' : 'login') // 'login' | 'cadastro' | 'app'
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
